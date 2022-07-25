@@ -561,7 +561,7 @@ void run_sweep_sharedqueue(const Aabb *boxes, MemHandler *memhandle, int N,
     memhandle->MAX_OVERLAP_CUTOFF = N;
   if (memlimit) {
     memhandle->limitGB = memlimit;
-    spdlog::info("Limit set to {:d}", memhandle->limitGB);
+    spdlog::trace("Limit set to {:d}", memhandle->limitGB);
   }
 
   int device_init_id = 0;

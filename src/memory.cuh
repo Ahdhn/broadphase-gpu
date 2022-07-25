@@ -86,8 +86,8 @@ __device__ __host__ struct MemHandler {
     size_t tmp = static_cast<size_t>(limitGB) * 1073741824;
     size_t userAllocatable = tmp - used;
 
-    spdlog::info("Can allocate {:.2f}% of memory",
-                 static_cast<float>(userAllocatable) / total * 100);
+    spdlog::trace("Can allocate {:.2f}% of memory",
+                  static_cast<float>(userAllocatable) / total * 100);
 
     return std::min(defaultAllocatable, userAllocatable);
     ;
@@ -96,37 +96,25 @@ __device__ __host__ struct MemHandler {
   void setUnitSize(const size_t constraint) {
     size_t allocatable = __getAllocatable();
     size_t available_units = (allocatable - constraint) / sizeof(MP_unit);
-    spdlog::trace("unit options: available {:d} or overlap mulitplier {:d}",
-                  available_units, 32 * MAX_QUERIES);
-    MAX_UNIT_SIZE = std::min(available_units, 32 * MAX_QUERIES);
-    spdlog::trace("Set unit_size to {:.2f}% of allocatable mem",
+    size_t default_units = 2 * MAX_QUERIES;
+    spdlog::debug("unit options: available {:d} or overlap mulitplier {:d}",
+                  available_units, default_units);
+    MAX_UNIT_SIZE = std::min(available_units, default_units);
+    spdlog::debug("Set unit_size to {:.2f}% of allocatable mem",
                   static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) /
                     allocatable * 100);
     return;
   }
 
-  void increaseUnitSize(const size_t constraint) {
+  void handleOverflow(const size_t constraint) {
     size_t allocatable = __getAllocatable();
-    spdlog::trace("Attempting to double w/ constraint {:d}", constraint);
     if ((allocatable - constraint) > 0) {
       MAX_UNIT_SIZE *= 2;
-      spdlog::trace("Doubling unit_size to {:.2f}% of allocatable mem",
-                    static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) /
-                      allocatable * 100);
+      spdlog::warn("Doubling unit_size to {:d}", MAX_UNIT_SIZE);
+    } else {
+      MAX_QUERIES /= 2;
+      spdlog::warn("Halving queries to {:d}", MAX_QUERIES);
     }
-  }
-
-  void handleOverflow(const size_t constraint) {
-    // size_t allocatable = __getAllocatable();
-    // if ((allocatable - constraint) > 0) {
-    //   MAX_UNIT_SIZE *= 2;
-    //   spdlog::trace("Doubling unit_size to {:.2f}% of allocatable mem",
-    //                 static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) /
-    //                   allocatable * 100);
-    // } else {
-    MAX_QUERIES /= 2;
-    spdlog::warn("Halving queries to {:d}", MAX_QUERIES);
-    // }
   }
 
   void handleBroadPhaseOverflow(int desired_count) {
@@ -135,6 +123,9 @@ __device__ __host__ struct MemHandler {
     size_t largest_overlap_size =
       (allocatable - sizeof(CCDConfig)) /
       (sizeof(CCDData) + sizeof(MP_unit) + 3 * sizeof(int2));
+    // size_t doubled = 2 * MAX_OVERLAP_SIZE;
+    // MAX_OVERLAP_SIZE = std::min(std::min(largest_overlap_size, doubled),
+    //                             static_cast<size_t>(desired_count));
     MAX_OVERLAP_SIZE =
       std::min(largest_overlap_size, static_cast<size_t>(desired_count));
     spdlog::info(
