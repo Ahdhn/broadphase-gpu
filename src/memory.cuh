@@ -86,46 +86,101 @@ __device__ __host__ struct MemHandler {
     size_t tmp = static_cast<size_t>(limitGB) * 1073741824;
     size_t userAllocatable = tmp - used;
 
-    spdlog::trace("Can allocate {:.2f}% of memory",
+    spdlog::debug("Can allocate ({:d}) {:.2f}% of memory", userAllocatable,
                   static_cast<float>(userAllocatable) / total * 100);
 
     return std::min(defaultAllocatable, userAllocatable);
     ;
   }
 
-  void setUnitSize(const size_t constraint) {
-    size_t allocatable = __getAllocatable();
-    size_t available_units = (allocatable - constraint) / sizeof(MP_unit);
-    size_t default_units = 2 * MAX_QUERIES;
+  // void setUnitSize(const size_t constraint) {
+  //   size_t allocatable = __getAllocatable();
+  //   if (allocatable <= constraint)
+  //     size_t available_units = allocatable - constraint;
+  //   available_units /= sizeof(MP_unit);
+  //   size_t default_units = 2 * MAX_QUERIES;
+  //   spdlog::debug("unit options: available {:d} or overlap mulitplier {:d}",
+  //                 available_units, default_units);
+  //   MAX_UNIT_SIZE = std::min(available_units, default_units);
+  //   spdlog::debug(
+  //     "Set unit_size to ({:d}) {:.2f}% of allocatable mem", MAX_UNIT_SIZE,
+  //     static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) / allocatable *
+  //     100);
+  //   return;
+  // }
+
+  void handleNarrowPhase(int &nbr) {
+    size_t allocatable = 0;
+    size_t constraint = 0;
+    allocatable = __getAllocatable();
+    nbr = std::min((size_t)nbr, MAX_QUERIES);
+    constraint =
+      sizeof(CCDData) * nbr + sizeof(CCDConfig); //+ nbr * sizeof(int2) * 2 +
+                                                 //+ sizeof(CCDData) * nbr;
+    if (allocatable <= constraint) {
+      MAX_QUERIES = (allocatable - sizeof(CCDConfig)) / sizeof(CCDData);
+      spdlog::warn("Insufficient memory for queries, shrinking queries to {:d}",
+                   MAX_QUERIES);
+      nbr = std::min((size_t)nbr, MAX_QUERIES);
+      return;
+    }
+    constraint =
+      sizeof(MP_unit) * nbr + sizeof(CCDConfig) + sizeof(CCDData) * nbr;
+    ;
+    if (allocatable <= constraint) {
+      MAX_UNIT_SIZE =
+        (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + sizeof(MP_unit));
+      spdlog::warn(
+        "[MEM INITIAL ISSUE]:  unit size, shrinking unit size to {:d}",
+        MAX_UNIT_SIZE);
+      nbr = std::min(static_cast<size_t>(nbr), MAX_UNIT_SIZE);
+      return;
+    }
+    // we are ok if we made it here
+
+    size_t available_units = allocatable - constraint;
+    available_units /= sizeof(MP_unit);
+    // size_t default_units = MAX_UNIT_SIZE ? 2 * MAX_UNIT_SIZE : 2 *
+    // size_t default_units = 2 * MAX_QUERIES;
+    // if we havent set max_unit_size, set it
     spdlog::debug("unit options: available {:d} or overlap mulitplier {:d}",
-                  available_units, default_units);
+                  available_units, MAX_UNIT_SIZE);
+    size_t default_units = 2 * nbr;
     MAX_UNIT_SIZE = std::min(available_units, default_units);
-    spdlog::debug("Set unit_size to {:.2f}% of allocatable mem",
-                  static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) /
-                    allocatable * 100);
+    spdlog::warn("[MEM INITIAL OK]: MAX_UNIT_SIZE={:d}", MAX_UNIT_SIZE);
+    nbr = std::min((size_t)nbr, MAX_UNIT_SIZE);
     return;
   }
 
-  void handleOverflow(const size_t constraint) {
+  void handleOverflow(int &nbr) {
+    size_t constraint = sizeof(MP_unit) * 2 * MAX_UNIT_SIZE +
+                        sizeof(CCDConfig) //+ tmp_nbr * sizeof(int2) * 2 +
+                        + sizeof(CCDData) * nbr;
+
     size_t allocatable = __getAllocatable();
-    if ((allocatable - constraint) > 0) {
+    if (allocatable > constraint) {
       MAX_UNIT_SIZE *= 2;
-      spdlog::warn("Doubling unit_size to {:d}", MAX_UNIT_SIZE);
+      spdlog::warn("Overflow: Doubling unit_size to {:d}", MAX_UNIT_SIZE);
     } else {
-      MAX_QUERIES /= 2;
-      spdlog::warn("Halving queries to {:d}", MAX_QUERIES);
+      while (allocatable <= constraint) {
+        MAX_QUERIES /= 2;
+        nbr = std::min(static_cast<size_t>(nbr), MAX_QUERIES);
+        spdlog::warn("Overflow: Halving queries to {:d}", MAX_QUERIES);
+        constraint = sizeof(MP_unit) * MAX_UNIT_SIZE +
+                     sizeof(CCDConfig) //+ tmp_nbr * sizeof(int2) * 2 +
+                     + sizeof(CCDData) * nbr;
+      }
     }
+    nbr =
+      std::min(MAX_UNIT_SIZE, std::min(static_cast<size_t>(nbr), MAX_QUERIES));
   }
 
   void handleBroadPhaseOverflow(int desired_count) {
     size_t allocatable = __getAllocatable();
 
     size_t largest_overlap_size =
-      (allocatable - sizeof(CCDConfig)) /
-      (sizeof(CCDData) + sizeof(MP_unit) + 3 * sizeof(int2));
-    // size_t doubled = 2 * MAX_OVERLAP_SIZE;
-    // MAX_OVERLAP_SIZE = std::min(std::min(largest_overlap_size, doubled),
-    //                             static_cast<size_t>(desired_count));
+      (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + 3 * sizeof(int2));
+    // (sizeof(CCDData) + sizeof(MP_unit) + 3 * sizeof(int2));
     MAX_OVERLAP_SIZE =
       std::min(largest_overlap_size, static_cast<size_t>(desired_count));
     spdlog::info(
