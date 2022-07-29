@@ -651,9 +651,10 @@ void run_sweep_sharedqueue(const Aabb *boxes, MemHandler *memhandle, int N,
   // MemHandler memhandle;
   // Guessing global collision output size
   // int guess = memhandle->MAX_OVERLAP_CUTOFF; // 200 * N;
+  memhandle->setOverlapSize();
   spdlog::trace("Guess cutoff: {:d}", memhandle->MAX_OVERLAP_CUTOFF);
   size_t overlaps_size = memhandle->MAX_OVERLAP_SIZE * sizeof(int2);
-  spdlog::trace("overlaps_size: {:d}", overlaps_size);
+  spdlog::info("overlaps_size: {:d}", overlaps_size);
   gpuErrchk(cudaGetLastError());
 
   int *d_start;

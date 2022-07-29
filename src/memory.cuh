@@ -69,7 +69,7 @@ public:
 __device__ __host__ struct MemHandler {
 
   size_t MAX_OVERLAP_CUTOFF = 0;
-  size_t MAX_OVERLAP_SIZE = 1e6;
+  size_t MAX_OVERLAP_SIZE = 0;
   size_t MAX_UNIT_SIZE = 0;
   size_t MAX_QUERIES = 0;
   int realcount = 0;
@@ -92,22 +92,6 @@ __device__ __host__ struct MemHandler {
     return std::min(defaultAllocatable, userAllocatable);
     ;
   }
-
-  // void setUnitSize(const size_t constraint) {
-  //   size_t allocatable = __getAllocatable();
-  //   if (allocatable <= constraint)
-  //     size_t available_units = allocatable - constraint;
-  //   available_units /= sizeof(MP_unit);
-  //   size_t default_units = 2 * MAX_QUERIES;
-  //   spdlog::debug("unit options: available {:d} or overlap mulitplier {:d}",
-  //                 available_units, default_units);
-  //   MAX_UNIT_SIZE = std::min(available_units, default_units);
-  //   spdlog::debug(
-  //     "Set unit_size to ({:d}) {:.2f}% of allocatable mem", MAX_UNIT_SIZE,
-  //     static_cast<float>(MAX_UNIT_SIZE) * sizeof(MP_unit) / allocatable *
-  //     100);
-  //   return;
-  // }
 
   void handleNarrowPhase(int &nbr) {
     size_t allocatable = 0;
@@ -173,6 +157,13 @@ __device__ __host__ struct MemHandler {
     }
     nbr =
       std::min(MAX_UNIT_SIZE, std::min(static_cast<size_t>(nbr), MAX_QUERIES));
+  }
+
+  void setOverlapSize() {
+    size_t allocatable = __getAllocatable();
+
+    MAX_OVERLAP_SIZE =
+      (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + 3 * sizeof(int2));
   }
 
   void handleBroadPhaseOverflow(int desired_count) {
