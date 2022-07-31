@@ -14,7 +14,7 @@ endif()
 # ###############################################################################
 option(STQ_WITH_CPU "Enable CPU Implementation" ON)
 option(STQ_WITH_CUDA "Enable CUDA Implementation" ON)
-option(STQ_KEEP_CPU_OVERLAPS "Keep CPU overlaps after CUDA method" ON)
+option(STQ_KEEP_CPU_OVERLAPS "Keep CPU overlaps after CUDA method" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/stq")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/recipes/")
