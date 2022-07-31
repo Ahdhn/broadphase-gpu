@@ -159,19 +159,18 @@ __device__ __host__ struct MemHandler {
       std::min(MAX_UNIT_SIZE, std::min(static_cast<size_t>(nbr), MAX_QUERIES));
   }
 
-  void setOverlapSize() {
+  size_t __getLargestOverlap() {
     size_t allocatable = __getAllocatable();
-
-    MAX_OVERLAP_SIZE =
-      (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + 3 * sizeof(int2));
+    return (allocatable - sizeof(CCDConfig)) /
+           (sizeof(CCDData) + 3 * sizeof(int2));
   }
+
+  void setOverlapSize() { MAX_OVERLAP_SIZE = __getLargestOverlap(); }
 
   void handleBroadPhaseOverflow(int desired_count) {
     size_t allocatable = __getAllocatable();
+    size_t largest_overlap_size = __getLargestOverlap();
 
-    size_t largest_overlap_size =
-      (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + 3 * sizeof(int2));
-    // (sizeof(CCDData) + sizeof(MP_unit) + 3 * sizeof(int2));
     MAX_OVERLAP_SIZE =
       std::min(largest_overlap_size, static_cast<size_t>(desired_count));
     spdlog::info(
@@ -179,7 +178,7 @@ __device__ __host__ struct MemHandler {
       static_cast<float>(MAX_OVERLAP_SIZE) * sizeof(int2) / allocatable * 100,
       MAX_OVERLAP_SIZE);
 
-    if (MAX_OVERLAP_SIZE == largest_overlap_size) {
+    if (MAX_OVERLAP_SIZE < desired_count) {
       MAX_OVERLAP_CUTOFF *= 0.5;
       spdlog::warn(
         "Insufficient memory to increase overlap size, shrinking cutoff 0.5x to {:d}",
