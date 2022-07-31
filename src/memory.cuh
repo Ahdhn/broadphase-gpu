@@ -103,8 +103,9 @@ __device__ __host__ struct MemHandler {
                                                  //+ sizeof(CCDData) * nbr;
     if (allocatable <= constraint) {
       MAX_QUERIES = (allocatable - sizeof(CCDConfig)) / sizeof(CCDData);
-      spdlog::warn("Insufficient memory for queries, shrinking queries to {:d}",
-                   MAX_QUERIES);
+      spdlog::debug(
+        "Insufficient memory for queries, shrinking queries to {:d}",
+        MAX_QUERIES);
       nbr = std::min((size_t)nbr, MAX_QUERIES);
       return;
     }
@@ -114,7 +115,7 @@ __device__ __host__ struct MemHandler {
     if (allocatable <= constraint) {
       MAX_UNIT_SIZE =
         (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + sizeof(MP_unit));
-      spdlog::warn(
+      spdlog::debug(
         "[MEM INITIAL ISSUE]:  unit size, shrinking unit size to {:d}",
         MAX_UNIT_SIZE);
       nbr = std::min(static_cast<size_t>(nbr), MAX_UNIT_SIZE);
@@ -131,7 +132,7 @@ __device__ __host__ struct MemHandler {
                   available_units, MAX_UNIT_SIZE);
     size_t default_units = 2 * nbr;
     MAX_UNIT_SIZE = std::min(available_units, default_units);
-    spdlog::warn("[MEM INITIAL OK]: MAX_UNIT_SIZE={:d}", MAX_UNIT_SIZE);
+    spdlog::debug("[MEM INITIAL OK]: MAX_UNIT_SIZE={:d}", MAX_UNIT_SIZE);
     nbr = std::min((size_t)nbr, MAX_UNIT_SIZE);
     return;
   }
@@ -144,12 +145,12 @@ __device__ __host__ struct MemHandler {
     size_t allocatable = __getAllocatable();
     if (allocatable > constraint) {
       MAX_UNIT_SIZE *= 2;
-      spdlog::warn("Overflow: Doubling unit_size to {:d}", MAX_UNIT_SIZE);
+      spdlog::debug("Overflow: Doubling unit_size to {:d}", MAX_UNIT_SIZE);
     } else {
       while (allocatable <= constraint) {
         MAX_QUERIES /= 2;
         nbr = std::min(static_cast<size_t>(nbr), MAX_QUERIES);
-        spdlog::warn("Overflow: Halving queries to {:d}", MAX_QUERIES);
+        spdlog::debug("Overflow: Halving queries to {:d}", MAX_QUERIES);
         constraint = sizeof(MP_unit) * MAX_UNIT_SIZE +
                      sizeof(CCDConfig) //+ tmp_nbr * sizeof(int2) * 2 +
                      + sizeof(CCDData) * nbr;
@@ -180,7 +181,7 @@ __device__ __host__ struct MemHandler {
 
     if (MAX_OVERLAP_SIZE < desired_count) {
       MAX_OVERLAP_CUTOFF *= 0.5;
-      spdlog::warn(
+      spdlog::debug(
         "Insufficient memory to increase overlap size, shrinking cutoff 0.5x to {:d}",
         MAX_OVERLAP_CUTOFF);
     }
