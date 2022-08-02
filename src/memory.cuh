@@ -111,7 +111,7 @@ __device__ __host__ struct MemHandler {
     }
     constraint =
       sizeof(MP_unit) * nbr + sizeof(CCDConfig) + sizeof(CCDData) * nbr;
-    ;
+
     if (allocatable <= constraint) {
       MAX_UNIT_SIZE =
         (allocatable - sizeof(CCDConfig)) / (sizeof(CCDData) + sizeof(MP_unit));
