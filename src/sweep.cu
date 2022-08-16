@@ -219,19 +219,20 @@ __global__ void build_checker(Scalar3 *sm, int2 *out, int N, int *count,
 }
 
 __global__ void twostage_queue(Scalar2 *sm, const MiniBox *const mini,
-                               int2 *overlaps, int N, int *count, int guess,
-                               int *start, int *end, const int MAX_OVERLAP_SIZE) {
+                               int2 *overlaps, int N, int *count, int *start,
+                               int *nextPossibleThread, MemHandler *mem) {
   __shared__ Queue queue;
   queue.heap_size = HEAP_SIZE;
   queue.start = 0;
   queue.end = 0;
 
   int tid = threadIdx.x + blockIdx.x * blockDim.x + *start;
+
   if (tid >= N || tid + 1 >= N)
     return;
 
-  // if (count >= MAX_OVERLAP_SIZE && blockIdx.x > maxBlockId )
-  //   return;
+  if (tid >= mem->MAX_OVERLAP_CUTOFF + *start)
+    return;
 
   Scalar2 a = sm[tid];
   Scalar2 b = sm[tid + 1];
@@ -252,7 +253,8 @@ __global__ void twostage_queue(Scalar2 *sm, const MiniBox *const mini,
 
     if (does_collide(ax, bx) && is_valid_pair(ax.vertexIds, bx.vertexIds) &&
         !covertex(ax.vertexIds, bx.vertexIds)) {
-      add_overlap(ax.id, bx.id, count, overlaps, guess);
+      add_overlap(ax.id, bx.id, count, overlaps, nextPossibleThread, start,
+                  mem);
     }
 
     if (res.y + 1 >= N)

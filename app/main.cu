@@ -14,6 +14,7 @@
 #include <stq/gpu/groundtruth.cuh>
 #include <stq/gpu/simulation.cuh>
 #include <stq/gpu/util.cuh>
+#include <stq/gpu/memory.cuh>
 // #include <stq/gpu/klee.cuh>
 #include <stq/gpu/io.cuh>
 
@@ -32,6 +33,8 @@ bool is_file_exist(const char *fileName) {
 int main(int argc, char **argv) {
   spdlog::set_level(static_cast<spdlog::level::level_enum>(0));
   vector<char *> compare;
+
+  MemHandler *memhandle = new MemHandler();
 
   char *filet0;
   char *filet1;
@@ -60,8 +63,10 @@ int main(int argc, char **argv) {
   bool sharedqueue_mgpu = false;
   bool bigworkerqueue = false;
 
+  int memlimit = 0;
+
   int o;
-  while ((o = getopt(argc, argv, "c:n:b:p:d:WPQZ")) != -1) {
+  while ((o = getopt(argc, argv, "c:n:b:p:d:v:WPQZ")) != -1) {
     switch (o) {
     case 'c':
       optind--;
@@ -75,6 +80,9 @@ int main(int argc, char **argv) {
       break;
     case 'b':
       nbox = atoi(optarg);
+      break;
+    case 'v':
+      memlimit = atoi(optarg);
       break;
     case 'p':
       parallel = stoi(optarg);
@@ -103,16 +111,19 @@ int main(int argc, char **argv) {
   int tidstart = 0;
 
   if (evenworkload)
-    run_sweep_sharedqueue(boxes.data(), N, nbox, overlaps, d_overlaps, d_count,
-                          parallel, tidstart, devcount);
-  else if (sharedqueue_mgpu)
-    run_sweep_multigpu_queue(boxes.data(), N, nbox, overlaps, parallel,
-                             devcount);
-  else if (bigworkerqueue)
-    run_sweep_bigworkerqueue(boxes.data(), N, nbox, overlaps, d_overlaps,
-                             d_count, parallel, devcount);
+    run_sweep_sharedqueue(boxes.data(), memhandle, N, nbox, overlaps,
+                          d_overlaps, d_count, parallel, tidstart, devcount,
+                          memlimit);
+  // else if (sharedqueue_mgpu)
+  //   run_sweep_multigpu_queue(boxes.data(), N, nbox, overlaps, parallel,
+  //                            devcount);
+  // else if (bigworkerqueue)
+  //   run_sweep_bigworkerqueue(boxes.data(), N, nbox, overlaps, d_overlaps,
+  //                            d_count, parallel, devcount);
   else
     run_sweep_multigpu(boxes.data(), N, nbox, overlaps, parallel, devcount);
+
+  spdlog::debug("Final CPU overlaps size : {:d}", overlaps.size());
 
   for (auto i : compare) {
     compare_mathematica(overlaps, i);
