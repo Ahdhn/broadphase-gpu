@@ -19,8 +19,8 @@ include(FetchContent)
 FetchContent_Declare(
     libigl
     GIT_REPOSITORY https://github.com/libigl/libigl.git
-    GIT_TAG v2.3.0
-    GIT_SHALLOW TRUE
+    GIT_TAG bf079eb962e0d3b9b05fa40517656bc8c2a2ba13
+    #GIT_SHALLOW TRUE
 )
 FetchContent_GetProperties(libigl)
 if(libigl_POPULATED)

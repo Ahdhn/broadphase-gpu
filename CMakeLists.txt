@@ -86,13 +86,13 @@ if(STQ_WITH_CUDA)
   endif()
 
   prepend_current_path(STQ_CUDA_SOURCES)
-  stq_copy_headers(${STQ_CUDA_SOURCES})
-  stq_set_source_group(${STQ_CUDA_SOURCES})
+  stq_copy_headers("${STQ_CUDA_SOURCES}")
+  stq_set_source_group("${STQ_CUDA_SOURCES}")
 
-  add_library(STQ_CUDA STATIC ${STQ_CUDA_SOURCES})
+  add_library(STQ_CUDA STATIC "${STQ_CUDA_SOURCES}")
   add_library(STQ::CUDA ALIAS STQ_CUDA)
 
-  target_include_directories(STQ_CUDA PUBLIC ${PROJECT_BINARY_DIR}/include)
+  target_include_directories(STQ_CUDA PUBLIC "${PROJECT_BINARY_DIR}/include")
   target_compile_definitions(STQ_CUDA PUBLIC NOMINMAX)
 
   if(STQ_KEEP_CPU_OVERLAPS)
@@ -104,7 +104,7 @@ if(STQ_WITH_CUDA)
   # Request that STQ_CUDA be built with -std=c++11
   # As this is a public compile feature anything that links to STQ_CUDA
   # will also build with -std=c++11
-  target_compile_features(STQ_CUDA PUBLIC cxx_std_11)
+  target_compile_features(STQ_CUDA PUBLIC cxx_std_17)
 
   # -------------------------------------------------------------------------------
   # CUDA

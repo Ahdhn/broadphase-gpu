@@ -140,7 +140,7 @@ __global__ void get_collision_pairs(Aabb *boxes, int *count, int2 *overlaps,
       // Aabb x = boxes[g_x__id];
       // Aabb y = boxes[g_y__id];
 
-      atomicAdd((uint *)queries, 1);
+      atomicAdd((unsigned int *)queries, 1);
 
       if (does_collide(x, y) && !covertex(x->vertexIds, y->vertexIds)
           // !covertex(xmax, ymax) &&
@@ -154,7 +154,7 @@ __global__ void get_collision_pairs(Aabb *boxes, int *count, int2 *overlaps,
 }
 
 // template<typename T>
-__global__ void reset_counter(uint *counter) { *counter = 0; }
+__global__ void reset_counter(unsigned int *counter) { *counter = 0; }
 
 __global__ void reset_counter(long long *counter) { *counter = 0; }
 

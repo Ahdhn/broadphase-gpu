@@ -390,9 +390,12 @@ void run_sweep_multigpu(const Aabb *boxes, int N, int nbox,
   cudaEventDestroy(start);
   cudaEventDestroy(stop);
 
-  cudaEvent_t starts[devices_count];
-  cudaEvent_t stops[devices_count];
-  float millisecondss[devices_count];
+  // cudaEvent_t starts[devices_count];
+  // cudaEvent_t stops[devices_count];
+  // float millisecondss[devices_count];
+  std::vector<cudaEvent_t> starts(devices_count);
+  std::vector<cudaEvent_t> stops(devices_count);
+  std::vector<float> millisecondss(devices_count);
 
   tbb::parallel_for(0, devices_count, 1, [&](int &device_id) {
     auto &local_overlaps = storages.local();

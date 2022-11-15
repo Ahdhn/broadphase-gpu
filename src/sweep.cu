@@ -128,22 +128,27 @@ __global__ void create_ds(Aabb *boxes, Scalar2 *sortedmin, MiniBox *mini, int N,
 
   if (tid >= N)
     return;
-  Scalar *min;
-  Scalar *max;
+  Scalar min[2];
+  Scalar max[2];
 
   if (axis == x) {
     sortedmin[tid] = make_Scalar2(boxes[tid].min.x, boxes[tid].max.x);
-    min = (Scalar[2]){boxes[tid].min.y, boxes[tid].min.z};
-    max = (Scalar[2]){boxes[tid].max.y, boxes[tid].max.z};
+    min[0] = boxes[tid].min.y;
+    min[1] = boxes[tid].min.z;
+    max[0] = boxes[tid].max.y;
+    max[1] = boxes[tid].max.z;
   } else if (axis == y) {
-
     sortedmin[tid] = make_Scalar2(boxes[tid].min.y, boxes[tid].max.y);
-    min = (Scalar[2]){boxes[tid].min.x, boxes[tid].min.z};
-    max = (Scalar[2]){boxes[tid].max.x, boxes[tid].max.z};
+    min[0] = boxes[tid].min.x;
+    min[1] = boxes[tid].min.z;
+    max[0] = boxes[tid].max.x;
+    max[1] = boxes[tid].max.z;
   } else {
     sortedmin[tid] = make_Scalar2(boxes[tid].min.z, boxes[tid].max.z);
-    min = (Scalar[2]){boxes[tid].min.x, boxes[tid].min.y};
-    max = (Scalar[2]){boxes[tid].max.x, boxes[tid].max.y};
+    min[0] = boxes[tid].min.x;
+    min[1] = boxes[tid].min.y;
+    max[0] = boxes[tid].max.x;
+    max[1] = boxes[tid].max.y;
   }
 
   // sm[tid] = SortedMin(boxes[tid].min.x, boxes[tid].max.x, tid,
