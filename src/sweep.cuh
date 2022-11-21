@@ -1,6 +1,6 @@
 #pragma once
 
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 
 // need this to get tiled_partition > 32 threads
 #define _CG_ABI_EXPERIMENTAL // enable experimental API
