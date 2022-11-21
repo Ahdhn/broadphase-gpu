@@ -13,7 +13,7 @@ namespace stq::gpu {
 #define BLOCK_PADDED BLOCK_SIZE_1D + PADDING
 
 // template <typename T>
-__global__ void reset_counter(uint *counter);
+__global__ void reset_counter(unsigned int *counter);
 __global__ void reset_counter(int *counter);
 __global__ void reset_counter(long long *counter);
 
