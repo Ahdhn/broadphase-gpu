@@ -124,10 +124,10 @@ if(STQ_WITH_CUDA)
   # Nvidia 1080/1080Ti -> compute_61
   # Nvidia 3080Ti -> compute_86
   if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES 70 75 86)
+    set(CMAKE_CUDA_ARCHITECTURES 86)
   endif()
 
-  set_target_properties(STQ_CUDA PROPERTIES CUDA_ARCHITECTURES "70;75;86")
+  set_target_properties(STQ_CUDA PROPERTIES CUDA_ARCHITECTURES "86")
 
   # if(APPLE)
   # # We need to add the default path to the driver (libcuda.dylib) as an rpath,
@@ -170,7 +170,7 @@ if(STQ_WITH_CUDA)
     # add_executable(GPUBF_bin app/main.cu)
     add_executable(GPUBF_bin app/main.cu)
     set_target_properties(GPUBF_bin PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    set_property(TARGET GPUBF_bin PROPERTY CUDA_ARCHITECTURES 70 75 86)
+    set_property(TARGET GPUBF_bin PROPERTY CUDA_ARCHITECTURES 86)
     target_link_libraries(GPUBF_bin PRIVATE STQ::CUDA)
 
     target_compile_options(GPUBF_bin PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
